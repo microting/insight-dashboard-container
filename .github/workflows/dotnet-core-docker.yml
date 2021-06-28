@@ -225,7 +225,6 @@ jobs:
         cp -av eform-angular-insight-dashboard-plugin/eform-client/wdio-headless-plugin-step2.conf.js eform-angular-frontend/eform-client/wdio-headless-plugin-step2.conf.js
         cp -av eform-angular-insight-dashboard-plugin/eform-client/wdio-plugin-step2.conf.js eform-angular-frontend/eform-client/wdio-plugin-step2.conf.js
         mkdir -p eform-angular-frontend/eFormAPI/eFormAPI.Web/Plugins
-        cp -av eform-angular-insight-dashboard-plugin/eFormAPI/eFormAPI.Web/Plugins/InsightDashboard eform-angular-frontend/eFormAPI/eFormAPI.Web/Plugins/InsightDashboard
         cd eform-angular-frontend/eform-client && ../../eform-angular-insight-dashboard-plugin/testinginstallpn.sh
     - name: Get the version release
       id: get_release_version
@@ -285,7 +284,7 @@ jobs:
         username: renemadsen
         password: zd8237EA
     - name: Build the tagged Docker image
-      run: docker build . -t microtingas/insight-dashboard-service-container:latest -t microtingas/insight-dashboard-service-container:${{ steps.get_release_version.outputs.VERSION }} --build-arg GITVERSION=${{ steps.get_service_version.outputs.FRONTENDVERSION }} --build-arg PLUGINVERSION=${{ steps.get_version.outputs.VERSION }} --build-arg PLUGIN2VERSION=${{ steps.get_plugin_version.outputs.PLUGIN2VERSION }}
+      run: docker build . -t microtingas/insight-dashboard-service-container:latest -t microtingas/insight-dashboard-service-container:${{ steps.get_release_version.outputs.VERSION }} --build-arg GITVERSION=${{ steps.get_service_version.outputs.FRONTENDVERSION }}
     - name: Tag builds
       run: |-
         docker tag microtingas/insight-dashboard-service-container:latest registry.microting.com/microtingas/insight-dashboard-service-container:latest
