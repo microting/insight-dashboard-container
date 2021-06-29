@@ -233,7 +233,7 @@ jobs:
       id: get_version
       run: echo ::set-output name=VERSION::$(cd eform-angular-insight-dashboard-plugin && git describe --abbrev=0 --tags | cut -d "v" -f 2)
     - name: Get the work order version
-      id: get_plugin_version
+      id: get_frontend_version
       run: echo ::set-output name=FRONTENDVERSION::$(cd eform-angular-frontend && git describe --abbrev=0 --tags | cut -d "v" -f 2)
     - name: Copy frontendfiles
       run: cp main/Dockerfile .
