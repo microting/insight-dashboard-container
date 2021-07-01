@@ -30,6 +30,9 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN mkdir -p /usr/share/man/man1mkdir -p /usr/share/man/man1
 RUN apt-get update && \
 	apt-get -y -q install \
+		libxml2 \
+		libgdiplus \
+		libc6-dev \
 		libreoffice \
 		libreoffice-writer \
 		ure \
