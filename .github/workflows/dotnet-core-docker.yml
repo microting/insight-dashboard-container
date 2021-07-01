@@ -35,11 +35,10 @@ jobs:
       run: sleep 15
     - uses: getong/rabbitmq-action@v1.2
       with:
-        rabbitmq version: '3.8.2-management-alpine'
+        rabbitmq version: '3.8.9-management'
         host port: 5672
         rabbitmq user: 'admin'
         rabbitmq password: 'password'
-        rabbitmq vhost: 'vhost_name'
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
@@ -47,7 +46,7 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: '14.16.1'
+        node-version: '14.17.1'
     - name: 'Preparing Frontend checkout'
       uses: actions/checkout@v2
       with:
@@ -116,7 +115,7 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: '14.16.1'
+        node-version: '14.17.1'
     - name: 'Preparing Frontend checkout'
       uses: actions/checkout@v2
       with:
