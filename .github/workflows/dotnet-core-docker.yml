@@ -42,7 +42,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.100
+        dotnet-version: 6.0.x
     - name: Use Node.js
       uses: actions/setup-node@v1
       with:
@@ -111,7 +111,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.100
+        dotnet-version: 6.0.x
     - name: Use Node.js
       uses: actions/setup-node@v1
       with:
@@ -187,7 +187,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.100
+        dotnet-version: 6.0.x
     - name: Install dependencies
       run: dotnet restore eform-debian-service
     - name: Build
