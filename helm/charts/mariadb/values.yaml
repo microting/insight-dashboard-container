@@ -245,7 +245,9 @@ primary:
     limits: {}
     #   memory: 256Mi
     #   cpu: 100m
-    requests: {}
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
     #   memory: 256Mi
     #   cpu: 100m
 
