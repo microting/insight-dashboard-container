@@ -96,6 +96,14 @@ affinity:
           operator: In
           values:
           - s-2vcpu-4gb
+        - key: node.kubernetes.io/instance-type
+          operator: NotIn
+          values:
+          - s-2vcpu-4gb-amd
+        - key: node.kubernetes.io/instance-type
+          operator: NotIn
+          values:
+          - s-1vcpu-2gb
 
 mariadb:
   ## Whether to deploy a mariadb server to satisfy the applications database requirements. To use an external database set this to false and configure the externalDatabase parameters
@@ -134,15 +142,23 @@ mariadb:
       accessModes:
         - ReadWriteOnce
       size: 8Gi
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: node.kubernetes.io/instance-type
-            operator: In
-            values:
-            - s-2vcpu-4gb
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: node.kubernetes.io/instance-type
+              operator: In
+              values:
+              - s-2vcpu-4gb
+            - key: node.kubernetes.io/instance-type
+              operator: NotIn
+              values:
+              - s-2vcpu-4gb-amd
+            - key: node.kubernetes.io/instance-type
+              operator: NotIn
+              values:
+              - s-1vcpu-2gb
 
 rabbitmq:
   ## Whether to deploy a rabbitmq server to satisfy the applications database requirements.
@@ -224,6 +240,7 @@ rabbitmq:
     total_memory_available_override_value = {{ include "rabbitmq.toBytes" .Values.resources.limits.memory }}
     vm_memory_high_watermark.{{ .Values.memoryHighWatermark.type }} = {{ .Values.memoryHighWatermark.value }}
     {{- end }}
+
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -233,6 +250,14 @@ rabbitmq:
             operator: In
             values:
             - s-2vcpu-4gb
+          - key: node.kubernetes.io/instance-type
+            operator: NotIn
+            values:
+            - s-2vcpu-4gb-amd
+          - key: node.kubernetes.io/instance-type
+            operator: NotIn
+            values:
+            - s-1vcpu-2gb
 
 cronjob:
   repository: microtingas/kubernetes-cloud-mysql-backup

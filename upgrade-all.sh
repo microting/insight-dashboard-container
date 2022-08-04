@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CUSTOMERS=('128' '309' '36' '740' '742' '779' '789')
+CUSTOMERS=('128' '309' '242' '740' '742' '779' '789')
 
 for CUSTOMER in ${CUSTOMERS[@]}; do
   echo "Updating customer with no $CUSTOMER"
