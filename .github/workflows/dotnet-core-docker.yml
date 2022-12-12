@@ -13,7 +13,7 @@ jobs:
       matrix:
         test: [a,b,c,d,e,f,g,h,i,j]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Upgrade Chrome browser
       run: |
         sudo apt-get update
@@ -40,9 +40,9 @@ jobs:
         rabbitmq user: 'admin'
         rabbitmq password: 'password'
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 7.0.x
     - name: Use Node.js
       uses: actions/setup-node@v1
       with:
@@ -81,7 +81,7 @@ jobs:
   insight-dashboard-build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         path: main
     - name: Upgrade Chrome browser
@@ -109,11 +109,11 @@ jobs:
         rabbitmq user: 'admin'
         rabbitmq password: 'password'
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 7.0.x
     - name: Use Node.js
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v3
       with:
         node-version: '14.18.1'
     - name: 'Preparing Frontend checkout'
@@ -123,7 +123,7 @@ jobs:
         ref: stable
         path: eform-angular-frontend
     - name: 'Preparing items planning checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
         repository: microting/eform-angular-insight-dashboard-plugin
@@ -178,16 +178,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 'Preparing debian-service checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
         repository: microting/eform-debian-service
         ref: stable
         path: eform-debian-service
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 7.0.x
     - name: Install dependencies
       run: dotnet restore eform-debian-service
     - name: Build
@@ -198,18 +198,18 @@ jobs:
     needs: [frontend-build, insight-dashboard-build, service-build]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         path: main
     - name: 'Preparing Frontend checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
         repository: microting/eform-angular-frontend
         ref: stable
         path: eform-angular-frontend
     - name: 'Preparing insight dashboard checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
         repository: microting/eform-angular-insight-dashboard-plugin
@@ -258,11 +258,11 @@ jobs:
     needs: [frontend-build, insight-dashboard-build, service-build]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         path: main
     - name: 'Preparing Frontend checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
         repository: microting/eform-debian-service
