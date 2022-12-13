@@ -247,7 +247,7 @@ primary:
     #   cpu: 100m
     requests:
       memory: "256Mi"
-      cpu: "200m"
+      cpu: "100m"
     #   memory: 256Mi
     #   cpu: 100m
 
