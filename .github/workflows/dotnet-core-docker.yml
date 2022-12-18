@@ -247,6 +247,19 @@ jobs:
       run: |-
         docker tag microtingas/insight-dashboard-container:latest microtingas/insight-dashboard-container:latest
         docker tag microtingas/insight-dashboard-container:${{ steps.get_release_version.outputs.VERSION }} microtingas/insight-dashboard-container:${{ steps.get_release_version.outputs.VERSION }}
+    - name: Start the newly build Docker container
+      id: docker-run
+      uses: actions-hub/docker/cli@master
+      with:
+        args: run --name my-container microtingas/insight-dashboard-container:latest
+    - name: Sleep 75 seconds for letting the container start and generate some output we can
+      run: sleep 75
+    - name: Get standard output
+      run: echo "${{ steps.docker-run.outputs.status }}"
+    - name: Stop the newly build Docker container
+      uses: actions-hub/docker/cli@master
+      with:
+        args: stop my-container
     - name: Push the tagged Docker image
       run: docker push microtingas/insight-dashboard-container:${{ steps.get_release_version.outputs.VERSION }}
     - name: Push the latest Docker image
@@ -254,12 +267,22 @@ jobs:
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
   deploy-service:
-    needs: [frontend-build, insight-dashboard-build, service-build]
+    #needs: [frontend-build, insight-dashboard-build, service-build]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
       with:
         path: main
+    - name: Create docker network 🖧
+      run: docker network create data
+    - name: Start MariaDB
+      run: |
+        docker pull mariadb:latest
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:latest
+    - name: Start rabbitmq
+      run: |
+        docker pull rabbitmq:latest
+        docker run -d --hostname my-rabbit --name some-rabbit --network data -e RABBITMQ_DEFAULT_USER=admin -e RABBITMQ_DEFAULT_PASS=password rabbitmq:latest
     - name: 'Preparing Frontend checkout'
       uses: actions/checkout@v3
       with:
@@ -283,9 +306,24 @@ jobs:
     - name: Build the tagged Docker image
       run: docker build . -t microtingas/insight-dashboard-service-container:latest -t microtingas/insight-dashboard-service-container:${{ steps.get_release_version.outputs.VERSION }} --build-arg GITVERSION=${{ steps.get_service_version.outputs.FRONTENDVERSION }}
     - name: Tag builds
-      run: |-
+      run: |
         docker tag microtingas/insight-dashboard-service-container:latest microtingas/insight-dashboard-service-container:latest
         docker tag microtingas/insight-dashboard-service-container:${{ steps.get_release_version.outputs.VERSION }} microtingas/insight-dashboard-service-container:${{ steps.get_release_version.outputs.VERSION }}
+    - name: Load DB dump
+      run: |
+        mysql -u root -h 127.0.0.1 --password=secretpassword -e 'create database `420_SDK`'
+        mysql -u root -h 127.0.0.1 --password=secretpassword 420_SDK < main/420_SDK.sql
+    - name: Start the newly build Docker container
+      id: docker-run
+      run: docker run --name my-container microtingas/insight-dashboard-service-container:latest ---network data "/ConnectionString=host=mariadbtest;Database=420_SDK;user=root;password=secretpassword;port=3306;Convert Zero Datetime = true;SslMode=none;" > docker_run_log
+    - name: Sleep 75 seconds for letting the container start and generate some output we can
+      run: sleep 75
+    - name: Get standard output
+      run: echo main/docker_run_log
+    - name: Stop the newly build Docker container
+      run: docker stop my-container
+    - name: Get standard output
+      run: echo docker_run_log
     - name: Push the tagged Docker image
       run: docker push microtingas/insight-dashboard-service-container:${{ steps.get_release_version.outputs.VERSION }}
     - name: Push the latest Docker image
