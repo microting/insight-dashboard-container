@@ -275,6 +275,8 @@ jobs:
         if [ $result -eq 1 ];then exit 0; fi
     - name: Push the latest Docker image
       run: docker push microtingas/insight-dashboard-container:latest
+    - name: Push the tagged Docker image
+      run: docker push microtingas/insight-dashboard-container:${{ steps.get_release_version.outputs.VERSION }}
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
   deploy-service:
