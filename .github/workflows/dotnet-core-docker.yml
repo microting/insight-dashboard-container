@@ -85,8 +85,17 @@ jobs:
       run: cat docker_run_log
     - name: Pretest changes to work with Docker container
       run: sed -i 's/localhost/mariadbtest/g' eform-angular-frontend/eform-client/e2e/Constants/DatabaseConfigurationConstants.ts
-    - name: Configuration testing
-      run: cd eform-angular-frontend/eform-client && npm run testheadless
+    - name: DB Configuration
+      uses: cypress-io/github-action@v4
+      with:
+        start: echo 'hi'
+        wait-on: "http://localhost:4200"
+        wait-on-timeout: 120
+        browser: chrome
+        record: false
+        spec: cypress/e2e/db/*
+        config-file: cypress.config.ts
+        working-directory: eform-angular-frontend/eform-client
     - name: testheadless2${{matrix.test}}
       run: cd eform-angular-frontend/eform-client && npm run testheadless2${{matrix.test}}
     - name: Stop the newly build Docker container
@@ -275,9 +284,18 @@ jobs:
     - name: Get standard output
       run: cat docker_run_log
     - name: Pretest changes to work with Docker container
-      run: sed -i 's/localhost/mariadbtest/g' eform-angular-frontend/eform-client/e2e/Constants/DatabaseConfigurationConstants.ts      
-    - name: Configuration testing
-      run: cd eform-angular-frontend/eform-client && npm run testheadless
+      run: sed -i 's/localhost/mariadbtest/g' eform-angular-frontend/eform-client/e2e/Constants/DatabaseConfigurationConstants.ts
+    - name: DB Configuration
+      uses: cypress-io/github-action@v4
+      with:
+        start: echo 'hi'
+        wait-on: "http://localhost:4200"
+        wait-on-timeout: 120
+        browser: chrome
+        record: false
+        spec: cypress/e2e/db/*
+        config-file: cypress.config.ts
+        working-directory: eform-angular-frontend/eform-client
     - name: Plugin testing
       run: cd eform-angular-frontend/eform-client && npm run testheadlessplugin
     - name: Stop the newly build Docker container
