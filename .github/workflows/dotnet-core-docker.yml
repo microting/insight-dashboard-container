@@ -61,8 +61,8 @@ jobs:
       run: docker network create --driver bridge --attachable data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:latest
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:latest
+        docker pull mariadb:10.8
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:10.8
     - name: Start rabbitmq
       run: |
         docker pull rabbitmq:latest
@@ -143,8 +143,8 @@ jobs:
       run: docker network create --driver bridge --attachable data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:latest
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:latest
+        docker pull mariadb:10.8
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:10.8
     - name: Start rabbitmq
       run: |
         docker pull rabbitmq:latest
@@ -171,8 +171,8 @@ jobs:
       run: docker network create --driver bridge data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:latest
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306 -d mariadb:latest
+        docker pull mariadb:10.8
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306 -d mariadb:10.8
     - name: Start rabbitmq
       run: |
         docker pull rabbitmq:latest
@@ -194,11 +194,6 @@ jobs:
     - name: Copy dependencies
       run: |
         cp -av eform-angular-insight-dashboard-plugin/eform-client/src/app/plugins/modules/insight-dashboard-pn eform-angular-frontend/eform-client/src/app/plugins/modules/insight-dashboard-pn
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/e2e/Tests/insight-dashboard-settings eform-angular-frontend/eform-client/e2e/Tests/insight-dashboard-settings
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/e2e/Tests/insight-dashboard-general eform-angular-frontend/eform-client/e2e/Tests/insight-dashboard-general
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/e2e/Page\ objects/InsightDashboard eform-angular-frontend/eform-client/e2e/Page\ objects/InsightDashboard
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/wdio-headless-plugin-step2.conf.ts eform-angular-frontend/eform-client/wdio-headless-plugin-step2.conf.ts
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/wdio-plugin-step2.conf.ts eform-angular-frontend/eform-client/wdio-plugin-step2.conf.ts
         mkdir -p eform-angular-frontend/eFormAPI/eFormAPI.Web/Plugins
         cd eform-angular-frontend/eform-client && ../../eform-angular-insight-dashboard-plugin/testinginstallpn.sh
     - name: Get the version release
@@ -223,10 +218,13 @@ jobs:
       with:
         name: insight-container
         path: insight-container.tar
-
   insight-dashboard-test:
     needs: insight-dashboard-build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test: [a,b,c,d,e,f,g]
     steps:
     - uses: actions/checkout@v3
       with:
@@ -235,8 +233,8 @@ jobs:
       run: docker network create --driver bridge data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:latest
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:latest
+        docker pull mariadb:10.8
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:10.8
     - uses: actions/download-artifact@v3
       with:
         name: insight-container
@@ -270,7 +268,7 @@ jobs:
         cp -av eform-angular-insight-dashboard-plugin/eform-client/e2e/Tests/insight-dashboard-settings eform-angular-frontend/eform-client/e2e/Tests/insight-dashboard-settings
         cp -av eform-angular-insight-dashboard-plugin/eform-client/e2e/Tests/insight-dashboard-general eform-angular-frontend/eform-client/e2e/Tests/insight-dashboard-general
         cp -av eform-angular-insight-dashboard-plugin/eform-client/e2e/Page\ objects/InsightDashboard eform-angular-frontend/eform-client/e2e/Page\ objects/InsightDashboard
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/wdio-headless-plugin-step2.conf.ts eform-angular-frontend/eform-client/wdio-headless-plugin-step2.conf.ts
+        cp -av eform-angular-insight-dashboard-plugin/eform-client/wdio-headless-plugin-step2${{matrix.test}}.conf.ts eform-angular-frontend/eform-client/wdio-headless-plugin-step2${{matrix.test}}.conf.ts
         cp -av eform-angular-insight-dashboard-plugin/eform-client/wdio-plugin-step2.conf.ts eform-angular-frontend/eform-client/wdio-plugin-step2.conf.ts
         mkdir -p eform-angular-frontend/eFormAPI/eFormAPI.Web/Plugins
         cd eform-angular-frontend/eform-client && ../../eform-angular-insight-dashboard-plugin/testinginstallpn.sh
@@ -297,7 +295,7 @@ jobs:
         config-file: cypress.config.ts
         working-directory: eform-angular-frontend/eform-client
     - name: Plugin testing
-      run: cd eform-angular-frontend/eform-client && npm run testheadlessplugin
+      run: cd eform-angular-frontend/eform-client && npm run testheadlessplugin2${{matrix.test}}
     - name: Stop the newly build Docker container
       run: docker stop my-container
     - name: Get standard output
@@ -319,8 +317,8 @@ jobs:
       run: docker network create --driver bridge data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:latest
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:latest
+        docker pull mariadb:10.8
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:10.8
     - name: 'Preparing items planning checkout'
       uses: actions/checkout@v3
       with:
@@ -398,8 +396,8 @@ jobs:
       run: docker network create --driver bridge data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:latest
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306 -d mariadb:latest
+        docker pull mariadb:10.8
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306 -d mariadb:10.8
     - name: Start rabbitmq
       run: |
         docker pull rabbitmq:latest
