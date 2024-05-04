@@ -70,7 +70,7 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '18.12.1'
+        node-version: 20
     - name: yarn install
       run: cd eform-angular-frontend/eform-client && yarn install
       if: steps.cache.outputs.cache-hit != 'true'
@@ -152,7 +152,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 8.0.x
     - name: Install dependencies
       run: dotnet restore eform-angular-frontend/eFormAPI/eFormAPI.sln
     - name: Build
@@ -242,7 +242,7 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '18.12.1'
+        8.0.xnode-version: 20
     - name: 'Preparing Frontend checkout'
       uses: actions/checkout@v2
       with:
@@ -349,7 +349,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 8.0.x
     - name: Install dependencies
       run: dotnet restore eform-debian-service
     - name: Build
