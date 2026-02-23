@@ -23,7 +23,7 @@ jobs:
         run: cd eform-angular-frontend && docker build . -t microtingas/frontend-container:latest --build-arg GITVERSION=1.0.0
         shell: bash
       - run: docker save microtingas/frontend-container:latest -o container.tar
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: container
           path: container.tar
@@ -44,16 +44,7 @@ jobs:
         repository: microting/eform-angular-frontend
         ref: stable
         path: eform-angular-frontend
-    - name: Cache node_modules
-      id: cache
-      uses: actions/cache@v3
-      with:
-        path: eform-angular-frontend/eform-client/node_modules
-        key: ${{ runner.os }}-build-${{ hashFiles('eform-angular-frontend/eform-client/package.json') }}
-        restore-keys: |
-          ${{ runner.os }}-build-
-          ${{ runner.os }}-
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: container
     - run: docker load -i container.tar
@@ -61,8 +52,8 @@ jobs:
       run: docker network create --driver bridge --attachable data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:10.8
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:10.8
+        docker pull mariadb:11.7
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:11.7
     - name: Start rabbitmq
       run: |
         docker pull rabbitmq:latest
@@ -70,10 +61,9 @@ jobs:
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 20
+        node-version: 22
     - name: yarn install
       run: cd eform-angular-frontend/eform-client && yarn install
-      if: steps.cache.outputs.cache-hit != 'true'
     - name: Create errorShots directory
       run: mkdir eform-angular-frontend/eform-client/errorShots
     - name: Start the newly build Docker container
@@ -96,6 +86,7 @@ jobs:
         spec: cypress/e2e/db/*
         config-file: cypress.config.ts
         working-directory: eform-angular-frontend/eform-client
+        command-prefix: "--"
     - name: testheadless2${{matrix.test}}
       run: cd eform-angular-frontend/eform-client && npm run testheadless2${{matrix.test}}
     - name: Stop the newly build Docker container
@@ -109,22 +100,13 @@ jobs:
       if: ${{ failure() }}
       run: |
         cat docker_run_log
-    - name: Notify slack fail
-      if: ${{ failure() }}
-      env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      uses: voxmedia/github-action-slack-notify-build@v1
-      with:
-        channel_id: CC04FGH5K
-        status: ${{matrix.test}} FAILED
-        color: danger
     - name: Archive screenshot artifacts
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: error Screenshots
         path: |
-          /home/runner/work/work-items-planning-container/work-items-planning-container/eform-angular-frontend/errorShots/chrome*.png
+          /home/runner/work/work-insight-dashboard-container/work-insight-dashboard-container/eform-angular-frontend/errorShots/chrome*.png
         retention-days: 2
   frontend-test-dotnet:
     needs: frontend-build
@@ -143,8 +125,8 @@ jobs:
       run: docker network create --driver bridge --attachable data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:10.8
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:10.8
+        docker pull mariadb:11.7
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:11.7
     - name: Start rabbitmq
       run: |
         docker pull rabbitmq:latest
@@ -152,7 +134,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 10.0.x
     - name: Install dependencies
       run: dotnet restore eform-angular-frontend/eFormAPI/eFormAPI.sln
     - name: Build
@@ -171,8 +153,8 @@ jobs:
       run: docker network create --driver bridge data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:10.8
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306 -d mariadb:10.8
+        docker pull mariadb:11.7
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306 -d mariadb:11.7
     - name: Start rabbitmq
       run: |
         docker pull rabbitmq:latest
@@ -207,14 +189,14 @@ jobs:
       run: echo ::set-output name=FRONTENDVERSION::$(cd eform-angular-frontend && git describe --abbrev=0 --tags | cut -d "v" -f 2)
     - name: Load DB dump
       run: |
-        docker exec -i mariadbtest mysql -u root --password=secretpassword -e 'create database `420_SDK`'
-        docker exec -i mariadbtest mysql -u root --password=secretpassword 420_SDK < main/420_SDK.sql
+        docker exec -i mariadbtest mariadb -u root --password=secretpassword -e 'create database `420_SDK`'
+        docker exec -i mariadbtest mariadb -u root --password=secretpassword 420_SDK < main/420_SDK.sql
     - name: Copy frontendfiles
       run: cp main/Dockerfile .
     - name: Build the tagged Docker image
       run: docker build . -t microtingas/insight-dashboard-container:latest -t microtingas/insight-dashboard-container:${{ steps.get_release_version.outputs.VERSION }} --build-arg GITVERSION=${{ steps.get_frontend_version.outputs.FRONTENDVERSION }} --build-arg PLUGINVERSION=${{ steps.get_version.outputs.VERSION }}
     - run: docker save microtingas/insight-dashboard-container:latest -o insight-container.tar
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: insight-container
         path: insight-container.tar
@@ -233,16 +215,16 @@ jobs:
       run: docker network create --driver bridge data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:10.8
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:10.8
-    - uses: actions/download-artifact@v3
+        docker pull mariadb:11.7
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:11.7
+    - uses: actions/download-artifact@v4
       with:
         name: insight-container
     - run: docker load -i insight-container.tar
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 20
+        node-version: 22
     - name: 'Preparing Frontend checkout'
       uses: actions/checkout@v3
       with:
@@ -260,8 +242,8 @@ jobs:
       run: sleep 15
     - name: Load DB dump
       run: |
-        mysql -u root -h 127.0.0.1 --password=secretpassword -e 'create database `420_SDK`'
-        mysql -u root -h 127.0.0.1 --password=secretpassword 420_SDK < eform-angular-insight-dashboard-plugin/420_SDK.sql
+        docker exec -i mariadbtest mariadb -u root -h 127.0.0.1 --password=secretpassword -e 'create database `420_SDK`'
+        docker exec -i mariadbtest mariadb -u root -h 127.0.0.1 --password=secretpassword 420_SDK < eform-angular-insight-dashboard-plugin/420_SDK.sql
     - name: Copy dependencies
       run: |
         cp -av eform-angular-insight-dashboard-plugin/eform-client/src/app/plugins/modules/insight-dashboard-pn eform-angular-frontend/eform-client/src/app/plugins/modules/insight-dashboard-pn
@@ -270,6 +252,8 @@ jobs:
         cp -av eform-angular-insight-dashboard-plugin/eform-client/e2e/Page\ objects/InsightDashboard eform-angular-frontend/eform-client/e2e/Page\ objects/InsightDashboard
         cp -av eform-angular-insight-dashboard-plugin/eform-client/wdio-headless-plugin-step2${{matrix.test}}.conf.ts eform-angular-frontend/eform-client/wdio-headless-plugin-step2${{matrix.test}}.conf.ts
         cp -av eform-angular-insight-dashboard-plugin/eform-client/wdio-plugin-step2.conf.ts eform-angular-frontend/eform-client/wdio-plugin-step2.conf.ts
+        mkdir -p eform-angular-frontend/eform-client/cypress/e2e/plugins/
+        cp -av eform-angular-insight-dashboard-plugin/eform-client/cypress/e2e/plugins/insight-dashboard-pn eform-angular-frontend/eform-client/cypress/e2e/plugins/insight-dashboard-pn
         mkdir -p eform-angular-frontend/eFormAPI/eFormAPI.Web/Plugins
         cd eform-angular-frontend/eform-client && ../../eform-angular-insight-dashboard-plugin/testinginstallpn.sh
     - name: yarn install
@@ -294,6 +278,7 @@ jobs:
         spec: cypress/e2e/db/*
         config-file: cypress.config.ts
         working-directory: eform-angular-frontend/eform-client
+        command-prefix: "--"
     - name: Plugin testing
       run: cd eform-angular-frontend/eform-client && npm run testheadlessplugin2${{matrix.test}}
     - name: Stop the newly build Docker container
@@ -317,8 +302,8 @@ jobs:
       run: docker network create --driver bridge data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:10.8
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:10.8
+        docker pull mariadb:11.7
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306:3306 -d mariadb:11.7
     - name: 'Preparing items planning checkout'
       uses: actions/checkout@v3
       with:
@@ -330,8 +315,8 @@ jobs:
       run: sleep 15
     - name: Load DB dump
       run: |
-        mysql -u root -h 127.0.0.1 --password=secretpassword -e 'create database `420_SDK`'
-        mysql -u root -h 127.0.0.1 --password=secretpassword 420_SDK < eform-angular-insight-dashboard-plugin/420_SDK.sql
+        docker exec -i mariadbtest mariadb -u root -h 127.0.0.1 --password=secretpassword -e 'create database `420_SDK`'
+        docker exec -i mariadbtest mariadb -u root -h 127.0.0.1 --password=secretpassword 420_SDK < eform-angular-insight-dashboard-plugin/420_SDK.sql
     - name: Build
       run: dotnet build eform-angular-insight-dashboard-plugin/eFormAPI/Plugins/InsightDashboard.Pn/InsightDashboard.Pn.sln
     - name: Unit Tests
@@ -349,7 +334,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 10.0.x
     - name: Install dependencies
       run: dotnet restore eform-debian-service
     - name: Build
@@ -363,7 +348,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         path: main
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: insight-container
     - run: docker load -i insight-container.tar
@@ -396,8 +381,8 @@ jobs:
       run: docker network create --driver bridge data
     - name: Start MariaDB
       run: |
-        docker pull mariadb:10.8
-        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306 -d mariadb:10.8
+        docker pull mariadb:11.7
+        docker run --name mariadbtest --network data -e MYSQL_ROOT_PASSWORD=secretpassword -p 3306 -d mariadb:11.7
     - name: Start rabbitmq
       run: |
         docker pull rabbitmq:latest
@@ -430,8 +415,8 @@ jobs:
         docker tag microtingas/insight-dashboard-service-container:${{ steps.get_release_version.outputs.VERSION }} microtingas/insight-dashboard-service-container:${{ steps.get_release_version.outputs.VERSION }}
     - name: Load DB dump
       run: |
-        docker exec -i mariadbtest mysql -u root --password=secretpassword -e 'create database `420_SDK`'
-        docker exec -i mariadbtest mysql -u root --password=secretpassword 420_SDK < main/420_SDK.sql
+        docker exec -i mariadbtest mariadb -u root --password=secretpassword -e 'create database `420_SDK`'
+        docker exec -i mariadbtest mariadb -u root --password=secretpassword 420_SDK < main/420_SDK.sql
     - name: Start the newly build Docker container
       id: docker-run
       run: docker run --name my-container --network data microtingas/insight-dashboard-service-container:latest "/ConnectionString=host=mariadbtest;Database=420_SDK;user=root;password=secretpassword;port=3306;Convert Zero Datetime = true;SslMode=none;" > docker_run_log 2>&1 &
