@@ -27,7 +27,7 @@ jobs:
         with:
           name: container
           path: container.tar
-  frontend-test:
+  frontend-playwright-test:
     needs: frontend-build
     runs-on: ubuntu-latest
     strategy:
@@ -58,14 +58,16 @@ jobs:
       run: |
         docker pull rabbitmq:latest
         docker run -d --hostname my-rabbit --name some-rabbit --network data -e RABBITMQ_DEFAULT_USER=admin -e RABBITMQ_DEFAULT_PASS=password rabbitmq:latest
+    - name: Sleep 30 seconds for letting the mariadb container start
+      run: sleep 30
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
         node-version: 22
     - name: yarn install
       run: cd eform-angular-frontend/eform-client && yarn install
-    - name: Create errorShots directory
-      run: mkdir eform-angular-frontend/eform-client/errorShots
+    - name: Install Playwright browsers
+      run: cd eform-angular-frontend/eform-client && npx playwright install --with-deps chromium
     - name: Start the newly build Docker container
       id: docker-run
       run: docker run --name my-container -p 4200:5000 --network data microtingas/frontend-container:latest "/ConnectionString=host=mariadbtest;Database=420_Angular;user=root;password=secretpassword;port=3306;Convert Zero Datetime = true;SslMode=none;" > docker_run_log 2>&1 &
@@ -74,39 +76,34 @@ jobs:
     - name: Get standard output
       run: cat docker_run_log
     - name: Pretest changes to work with Docker container
-      run: sed -i 's/localhost/mariadbtest/g' eform-angular-frontend/eform-client/e2e/Constants/DatabaseConfigurationConstants.ts
+      run: sed -i 's/localhost/mariadbtest/g' eform-angular-frontend/eform-client/playwright/e2e/Constants/DatabaseConfigurationConstants.ts
     - name: DB Configuration
-      uses: cypress-io/github-action@v4
-      with:
-        start: echo 'hi'
-        wait-on: "http://localhost:4200"
-        wait-on-timeout: 120
-        browser: chrome
-        record: false
-        spec: cypress/e2e/db/*
-        config-file: cypress.config.ts
-        working-directory: eform-angular-frontend/eform-client
-        command-prefix: "--"
-    - name: testheadless2${{matrix.test}}
-      run: cd eform-angular-frontend/eform-client && npm run testheadless2${{matrix.test}}
+      run: |
+        cd eform-angular-frontend/eform-client
+        npx playwright test playwright/e2e/Tests/database-configuration/
+    - name: Wait for app
+      run: npx wait-on http://localhost:4200 --timeout 120000
+    - name: ${{matrix.test}} playwright test
+      run: |
+        cd eform-angular-frontend/eform-client
+        npx playwright test playwright/e2e/Tests/${{matrix.test}}/
     - name: Stop the newly build Docker container
       run: docker stop my-container
     - name: Get standard output
       run: |
         cat docker_run_log
-        result=`cat docker_run_log | grep "Now listening on: http://0.0.0.0:5000" -m 1 | wc -l`
+        result=`cat docker_run_log | grep "Now listening on:" -m 1 | wc -l`
         if [ $result -ne 1 ];then exit 1; fi
     - name: The job has failed
       if: ${{ failure() }}
       run: |
         cat docker_run_log
-    - name: Archive screenshot artifacts
-      if: ${{ failure() }}
+    - name: Archive Playwright report
+      if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: error Screenshots
-        path: |
-          /home/runner/work/work-insight-dashboard-container/work-insight-dashboard-container/eform-angular-frontend/errorShots/chrome*.png
+        name: playwright-report-frontend-${{matrix.test}}
+        path: eform-angular-frontend/eform-client/playwright-report/
         retention-days: 2
   frontend-test-dotnet:
     needs: frontend-build
@@ -200,13 +197,13 @@ jobs:
       with:
         name: insight-container
         path: insight-container.tar
-  insight-dashboard-test:
+  insight-dashboard-playwright-test:
     needs: insight-dashboard-build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        test: [a,b,c,d,e,f,g]
+        test: [a,b,c]
     steps:
     - uses: actions/checkout@v3
       with:
@@ -231,7 +228,7 @@ jobs:
         repository: microting/eform-angular-frontend
         ref: stable
         path: eform-angular-frontend
-    - name: 'Preparing items planning checkout'
+    - name: 'Preparing insight dashboard checkout'
       uses: actions/checkout@v3
       with:
         fetch-depth: 0
@@ -247,17 +244,15 @@ jobs:
     - name: Copy dependencies
       run: |
         cp -av eform-angular-insight-dashboard-plugin/eform-client/src/app/plugins/modules/insight-dashboard-pn eform-angular-frontend/eform-client/src/app/plugins/modules/insight-dashboard-pn
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/e2e/Tests/insight-dashboard-settings eform-angular-frontend/eform-client/e2e/Tests/insight-dashboard-settings
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/e2e/Tests/insight-dashboard-general eform-angular-frontend/eform-client/e2e/Tests/insight-dashboard-general
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/e2e/Page\ objects/InsightDashboard eform-angular-frontend/eform-client/e2e/Page\ objects/InsightDashboard
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/wdio-headless-plugin-step2${{matrix.test}}.conf.ts eform-angular-frontend/eform-client/wdio-headless-plugin-step2${{matrix.test}}.conf.ts
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/wdio-plugin-step2.conf.ts eform-angular-frontend/eform-client/wdio-plugin-step2.conf.ts
-        mkdir -p eform-angular-frontend/eform-client/cypress/e2e/plugins/
-        cp -av eform-angular-insight-dashboard-plugin/eform-client/cypress/e2e/plugins/insight-dashboard-pn eform-angular-frontend/eform-client/cypress/e2e/plugins/insight-dashboard-pn
+        mkdir -p eform-angular-frontend/eform-client/playwright/e2e/plugins/
+        cp -av eform-angular-insight-dashboard-plugin/eform-client/playwright/e2e/plugins/insight-dashboard-pn eform-angular-frontend/eform-client/playwright/e2e/plugins/insight-dashboard-pn
+        cp -av eform-angular-insight-dashboard-plugin/eform-client/playwright.config.ts eform-angular-frontend/eform-client/playwright.config.ts
         mkdir -p eform-angular-frontend/eFormAPI/eFormAPI.Web/Plugins
         cd eform-angular-frontend/eform-client && ../../eform-angular-insight-dashboard-plugin/testinginstallpn.sh
     - name: yarn install
       run: cd eform-angular-frontend/eform-client && yarn install
+    - name: Install Playwright browsers
+      run: cd eform-angular-frontend/eform-client && npx playwright install --with-deps chromium
     - name: Start the newly build Docker container
       id: docker-run
       run: docker run --name my-container -p 4200:5000 --network data microtingas/insight-dashboard-container:latest "/ConnectionString=host=mariadbtest;Database=420_Angular;user=root;password=secretpassword;port=3306;Convert Zero Datetime = true;SslMode=none;" > docker_run_log 2>&1 &
@@ -266,32 +261,43 @@ jobs:
     - name: Get standard output
       run: cat docker_run_log
     - name: Pretest changes to work with Docker container
-      run: sed -i 's/localhost/mariadbtest/g' eform-angular-frontend/eform-client/e2e/Constants/DatabaseConfigurationConstants.ts
+      run: sed -i 's/localhost/mariadbtest/g' eform-angular-frontend/eform-client/playwright/e2e/Constants/DatabaseConfigurationConstants.ts
+    - name: Wait for app
+      run: npx wait-on http://localhost:4200 --timeout 120000
     - name: DB Configuration
-      uses: cypress-io/github-action@v4
-      with:
-        start: echo 'hi'
-        wait-on: "http://localhost:4200"
-        wait-on-timeout: 120
-        browser: chrome
-        record: false
-        spec: cypress/e2e/db/*
-        config-file: cypress.config.ts
-        working-directory: eform-angular-frontend/eform-client
-        command-prefix: "--"
+      run: |
+        cd eform-angular-frontend/eform-client
+        npx playwright test playwright/e2e/Tests/database-configuration/
+    - name: Enable plugin
+      if: matrix.test != 'a'
+      run: |
+        docker exec -i mariadbtest mysql -u root --password=secretpassword -e 'update 420_Angular.EformPlugins set Status = 2'
+        docker restart my-container
+        sleep 15
+    - name: Wait for app
+      run: npx wait-on http://localhost:4200 --timeout 120000
     - name: Plugin testing
-      run: cd eform-angular-frontend/eform-client && npm run testheadlessplugin2${{matrix.test}}
+      run: |
+        cd eform-angular-frontend/eform-client
+        npx playwright test playwright/e2e/plugins/insight-dashboard-pn/${{matrix.test}}/
     - name: Stop the newly build Docker container
       run: docker stop my-container
     - name: Get standard output
       run: |
         cat docker_run_log
-        result=`cat docker_run_log | grep "Now listening on: http://0.0.0.0:5000" -m 1 | wc -l`
+        result=`cat docker_run_log | grep "Now listening on:" -m 1 | wc -l`
         if [ $result -ne 1 ];then exit 1; fi
     - name: The job has failed
       if: ${{ failure() }}
       run: |
         cat docker_run_log
+    - name: Archive Playwright report
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report-${{matrix.test}}
+        path: eform-angular-frontend/eform-client/playwright-report/
+        retention-days: 2
   insight-dashboard-test-dotnet:
     runs-on: ubuntu-latest
     steps:
@@ -342,7 +348,7 @@ jobs:
     - name: Test
       run: dotnet test --no-restore --verbosity normal eform-debian-service
   deploy:
-    needs: [frontend-test, frontend-test-dotnet, insight-dashboard-test, insight-dashboard-test-dotnet, service-build]
+    needs: [frontend-playwright-test, frontend-test-dotnet, insight-dashboard-playwright-test, insight-dashboard-test-dotnet, service-build]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -371,7 +377,7 @@ jobs:
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
   deploy-service:
-    needs: [frontend-test, frontend-test-dotnet, insight-dashboard-test, insight-dashboard-test-dotnet, service-build]
+    needs: [frontend-playwright-test, frontend-test-dotnet, insight-dashboard-playwright-test, insight-dashboard-test-dotnet, service-build]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
