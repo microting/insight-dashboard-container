@@ -64,6 +64,8 @@ RUN apt-get update && \
 	apt -y autoremove && \
 	rm -rf /var/lib/apt/lists/*
 
-RUN adduser --home=/opt/libreoffice --disabled-password --gecos "" --shell=/bin/bash libreoffice
+RUN mkdir -p /opt/libreoffice && chown -R $APP_UID:$APP_UID /app /opt/libreoffice
+ENV HOME=/opt/libreoffice
+USER $APP_UID
 
 ENTRYPOINT ["dotnet", "eFormAPI.Web.dll"]
