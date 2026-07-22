@@ -296,7 +296,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: playwright-report-${{matrix.test}}
-        path: eform-angular-frontend/eform-client/playwright-report/
+        path: |
+          eform-angular-frontend/eform-client/test-results/
+          eform-angular-frontend/eform-client/playwright-report/
         retention-days: 2
   insight-dashboard-test-dotnet:
     runs-on: ubuntu-latest
